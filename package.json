@@ -3,9 +3,47 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc && jest --runInBand",
+    "build": "tsc",
+    "clean": "rimraf dist coverage junit.xml abgabe*.zip all.log",
+    "start": "nodemon --exec \"node --inspect --require ts-node/register src/index.ts\""
   },
   "author": "Alexander Szemeitat",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.15.3",
+    "@types/supertest": "^6.0.3",
+    "bestzip": "^2.2.1",
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "jest-extended": "^4.0.2",
+    "jest-junit": "^16.0.0",
+    "mongodb-memory-server": "^10.1.4",
+    "nodemon": "^3.1.10",
+    "restmatcher": "^1.1.16",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.14.1",
+    "trinkprotokolle-backend": "file:",
+    "winston": "^3.17.0"
+  }
 }
