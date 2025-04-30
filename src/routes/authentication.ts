@@ -17,34 +17,44 @@ declare global {
     }
 }
 
-export function requiresAuthentication(req: Request, res: Response, next: NextFunction) {
+export function requiresAuthentication(req: Request, res: Response, next: NextFunction): void {
     try {
         const loginResource = verifyJWT(req.cookies.access_token);
         req.pflegerId = loginResource.id;
         req.role = loginResource.role;
         next();    
     } catch (error) {
-        if (error instanceof Error && error.message == "Internal Error") return res.sendStatus(500);
+        if (error instanceof Error && error.message == "Internal Error") {
+            res.status(500).send();
+            return;
+        }
         res.sendStatus(401);
     }
 }
 
 export function requiresAdminPrivileges(req: Request, res: Response, next: NextFunction) {
-    if (!req.role || req.role !== "a") return res.sendStatus(403);
+    if (!req.role || req.role !== "a") {
+        res.sendStatus(403);
+        return
+    }
     next();
 }
 
-export function optionalAuthentication(req: Request, res: Response, next: NextFunction) {
+export function optionalAuthentication(req: Request, res: Response, next: NextFunction): void {
     try {
         const loginResource = verifyJWT(req.cookies.access_token);
         req.pflegerId = loginResource.id;
         req.role = loginResource.role;
         next();    
     } catch (error) {
-        if (error instanceof Error && error.message == "Internal Error") return res.status(500).send();
+        if (error instanceof Error && error.message == "Internal Error") {
+            res.status(500).send();
+            return;
+        }
         if (error instanceof Error && error.message == "No JWT") {
             res.status(401)
             return next();
         }
-        res.status(401).send();    }
+        res.status(401).send();   
+    }
 }

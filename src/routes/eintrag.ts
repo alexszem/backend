@@ -21,7 +21,10 @@ async (req, res) =>{
         const resourceToBeCreated = matchedData(req) as EintragResource;
         const protokoll = await getProtokoll(resourceToBeCreated.protokoll);
         const isNotProtokollErsteller = protokoll.ersteller !== req.pflegerId
-        if (!protokoll.public && isNotProtokollErsteller) return res.sendStatus(403);
+        if (!protokoll.public && isNotProtokollErsteller) {
+            res.sendStatus(403);
+            return
+        }
         const createdEintrag = await createEintrag(resourceToBeCreated);
         res.status(201).send(createdEintrag);
     } catch (error) {
@@ -38,7 +41,10 @@ async (req, res) => {
         const id = req.params!.id;;
         const eintrag = await getEintrag(id);
         const protokoll = await getProtokoll(eintrag.protokoll);
-        if (!protokoll.public && isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
+        if (!protokoll.public && isNotContributor(protokoll, eintrag, req)) {
+            res.sendStatus(403);
+            return
+        }
         res.status(200).send(eintrag)
     } catch (error) {
         handleErrors(error, res);
@@ -59,7 +65,10 @@ body("kommentar").isLength({min:1, max:1000}),
         compareParamAndBodyId(eintrag, req, res);
         const realEintrag = await getEintrag(eintrag.id!);
         const protokoll = await getProtokoll(realEintrag.protokoll);
-        if (isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
+        if (isNotContributor(protokoll, eintrag, req)) {
+            res.sendStatus(403);
+            return
+        }
         const updatedEintrag = await updateEintrag(eintrag);
         res.status(200).send(updatedEintrag);
     } catch (error) {
@@ -76,7 +85,10 @@ param("id").isMongoId(),
         const id = req.params!.id;
         const eintrag = await getEintrag(id);
         const protokoll = await getProtokoll(eintrag.protokoll);
-        if (isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
+        if (isNotContributor(protokoll, eintrag, req)){
+            res.sendStatus(403);
+            return
+        }
         await deleteEintrag(id);
         res.sendStatus(204);
     } catch (error) {

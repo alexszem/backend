@@ -18,7 +18,10 @@ async (req, res) => {
         handleMiddlewareErrors(req, res);
         const id = req.params!.id;
         const protokoll = await getProtokoll(id);
-        if (!protokoll.public && isNotErsteller(protokoll, req)) return res.sendStatus(403);
+        if (!protokoll.public && isNotErsteller(protokoll, req)) {
+            res.sendStatus(403);
+            return
+        }
         const eintraege = await getAlleEintraege(id);
         res.status(200).send(eintraege); // 200 by default
     } catch (error) {
@@ -43,7 +46,10 @@ async (req, res) => {
         handleMiddlewareErrors(req, res);
         const id = req.params!.id;
         const protokoll = await getProtokoll(id);
-        if (!protokoll.public && isNotErsteller(protokoll, req)) return res.sendStatus(403);
+        if (!protokoll.public && isNotErsteller(protokoll, req)) {
+            res.sendStatus(403);
+            return
+        }
         res.status(200).send(protokoll);
     } catch (error) {
         handleErrors(error, res)
@@ -61,7 +67,10 @@ async (req, res) => {
     try {
         handleMiddlewareErrors(req, res);
         const resourceToBeCreated = matchedData(req) as ProtokollResource;
-        if (isNotErsteller(resourceToBeCreated, req)) return res.sendStatus(403);
+        if (isNotErsteller(resourceToBeCreated, req)) {
+            res.sendStatus(403);
+            return
+        }
         const createdProtokoll = await createProtokoll(resourceToBeCreated); 
         res.status(201).send(createdProtokoll);
     } catch (error) {
@@ -84,7 +93,10 @@ async (req, res) => {
         const modification = matchedData(req) as ProtokollResource;
         compareParamAndBodyId(modification, req, res)
         const protokollToBeModified = await getProtokoll(modification.id!)
-        if (isNotErsteller(protokollToBeModified, req)) return res.sendStatus(403);
+        if (isNotErsteller(protokollToBeModified, req)) {
+            res.sendStatus(403);
+            return
+        }
         const modifiedPfleger = await updateProtokoll(modification);
         res.status(200).send(modifiedPfleger);
     } catch (error) {
@@ -100,11 +112,17 @@ async (req, res) =>{
         handleMiddlewareErrors(req, res);
         const id = req.params!.id;
         const protokoll = await getProtokoll(id);
-        if (isNotErsteller(protokoll, req)) return res.sendStatus(403)
+        if (isNotErsteller(protokoll, req)) {
+            res.sendStatus(403);
+            return
+        }
         await deleteProtokoll(id);
         res.sendStatus(204);
     } catch (error) {
-        if (error instanceof MyError) return res.status(error.statusCode).send(error.constructMessage());
+        if (error instanceof MyError) {
+            res.status(error.statusCode).send(error.constructMessage());
+            return 
+        } 
     }
 })
 

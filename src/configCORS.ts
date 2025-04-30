@@ -19,6 +19,5 @@ export function configureCORS(app: express.Express) {
         credentials: true
     }
     app.use(cors(corsOptions));
-    app.options('*', cors()) // enable pre-flight (request method "options") everywhere, you may want to specify that in detail in production
-
+    app.options(/.*/, cors()) // enable pre-flight (request method "options") everywhere, you may want to specify that in detail in production
 }

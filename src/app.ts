@@ -1,5 +1,4 @@
 import express from 'express';
-import "express-async-errors"; // needs to be imported before routers and other stuff!
 
 //import { loginRouter } from './routes/login';
 //import { eintragRouter } from './routes/eintrag';
@@ -14,7 +13,7 @@ const app = express();
 
 // Middleware:
 configureCORS(app);
-app.use('*', express.json()); // vgl. Folie 138
+app.use(/.*/,express.json());
 app.use(cookieParser());
 
 // Routes

@@ -22,7 +22,10 @@ async (req, res) =>{
             sameSite: "none"
         }).send(loginResource);
     } catch (error) {
-        if (error instanceof Error && error.message === "Internal Error") return res.sendStatus(500);
+        if (error instanceof Error && error.message === "Internal Error") {
+            res.sendStatus(500);
+            return
+        }
         else if (error instanceof MiddlewareError) return error.sendErrors(res);
         res.status(401).send(false);
     }
@@ -41,7 +44,10 @@ async (req, res) =>{
             sameSite: "none"
         }).send(loginResource);
     } catch (error) {
-        if (error instanceof Error && error.message === "Internal Error") return res.sendStatus(500);
+        if (error instanceof Error && error.message === "Internal Error") {
+            res.sendStatus(500);
+            return
+        } 
         else if (error instanceof MiddlewareError) return error.sendErrors(res);
         res.status(401).send(false);
     }
