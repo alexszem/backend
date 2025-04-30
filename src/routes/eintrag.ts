@@ -1,11 +1,10 @@
 import express from "express";
 import { createEintrag, deleteEintrag, getEintrag, updateEintrag } from "../services/EintragService";
 import { body, matchedData, param, validationResult } from "express-validator";
-import { EintragResource } from "../Resources";
-import { Types } from "mongoose";
-import { MyError } from "../myerror";
+import { EintragResource, ProtokollResource } from "../Resources";
 import { optionalAuthentication, requiresAuthentication } from "./authentication";
 import { getProtokoll } from "../services/ProtokollService";
+import { compareParamAndBodyId, handleErrors, handleMiddlewareErrors } from "./utils";
 
 export const eintragRouter = express.Router();
 
@@ -17,16 +16,16 @@ body("kommentar").optional().isLength({min:1, max:1000}),
 body("ersteller").isMongoId(),
 body("protokoll").isMongoId(),
 async (req, res) =>{
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
     try {
+        handleMiddlewareErrors(req, res);
         const resourceToBeCreated = matchedData(req) as EintragResource;
         const protokoll = await getProtokoll(resourceToBeCreated.protokoll);
-        if (!protokoll.public && protokoll.ersteller !== req.pflegerId) return res.sendStatus(403);
+        const isNotProtokollErsteller = protokoll.ersteller !== req.pflegerId
+        if (!protokoll.public && isNotProtokollErsteller) return res.sendStatus(403);
         const createdEintrag = await createEintrag(resourceToBeCreated);
         res.status(201).send(createdEintrag);
     } catch (error) {
-        if (error instanceof MyError) return res.status(error.statusCode).send(error.constructMessage());
+        handleErrors(error, res);
     }
 })
 
@@ -34,16 +33,15 @@ eintragRouter.get("/:id",
 optionalAuthentication,
 param("id").isMongoId(),
 async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
     try {
-    const id = req.params!.id;;
-    const eintrag = await getEintrag(id);
-    const protokoll = await getProtokoll(eintrag.protokoll);
-    if (!protokoll.public && protokoll.ersteller !== req.pflegerId && eintrag.ersteller !== req.pflegerId) return res.sendStatus(403);
-    res.send(eintrag).status(200)
+        handleMiddlewareErrors(req, res);
+        const id = req.params!.id;;
+        const eintrag = await getEintrag(id);
+        const protokoll = await getProtokoll(eintrag.protokoll);
+        if (!protokoll.public && isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
+        res.status(200).send(eintrag)
     } catch (error) {
-        if (error instanceof MyError) return res.status(error.statusCode).send(error.constructMessage());
+        handleErrors(error, res);
     }
 })
 
@@ -55,52 +53,37 @@ body("getraenk").isLength({min:1, max:100}),
 body("menge").isInt(),
 body("kommentar").isLength({min:1, max:1000}),
  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
-    
-    const httpId = req.params!.id;
-    const eintrag = matchedData(req) as EintragResource;
-    const bodyId = eintrag["id"]
-    if (!bodyId || httpId != bodyId) return res.status(400).send({
-        "errors": [ 
-            {"type": "field",
-            "location" : "params",
-            "msg" : "Invalid value",
-            "path" : "id",
-            "value" : httpId }, 
-            {"type": "field",
-            "location" : "body",
-            "msg" : "Invalid value",
-            "path" : "id",
-            "value" : bodyId }
-        ]
-    })
     try {
+        handleMiddlewareErrors(req, res);
+        const eintrag = matchedData(req) as EintragResource;
+        compareParamAndBodyId(eintrag, req, res);
         const realEintrag = await getEintrag(eintrag.id!);
         const protokoll = await getProtokoll(realEintrag.protokoll);
-        if (protokoll.ersteller !== req.pflegerId && eintrag.ersteller !== req.pflegerId) return res.sendStatus(403);
+        if (isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
         const updatedEintrag = await updateEintrag(eintrag);
-        res.send(updatedEintrag);
+        res.status(200).send(updatedEintrag);
     } catch (error) {
-        if (error instanceof MyError) return res.status(error.statusCode).send(error.constructMessage());
+        handleErrors(error, res);
     }
 })
-
 
 eintragRouter.delete("/:id",
 requiresAuthentication,
 param("id").isMongoId(),
  async (req, res) =>{
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
-     try {
-    const id = req.params!.id;
+    try {
+        handleMiddlewareErrors(req, res);
+        const id = req.params!.id;
         const eintrag = await getEintrag(id);
         const protokoll = await getProtokoll(eintrag.protokoll);
-        if (protokoll.ersteller !== req.pflegerId && eintrag.ersteller !== req.pflegerId) return res.sendStatus(403);
+        if (isNotContributor(protokoll, eintrag, req)) return res.sendStatus(403);
         await deleteEintrag(id);
         res.sendStatus(204);
     } catch (error) {
-        if (error instanceof MyError) return res.status(error.statusCode).send(error.constructMessage());
+        handleErrors(error, res);
     }
 })
+
+function isNotContributor(protokoll: ProtokollResource, eintrag: EintragResource, req: any): boolean {
+    return protokoll.ersteller !== req.pflegerId && eintrag.ersteller !== req.pflegerId
+}

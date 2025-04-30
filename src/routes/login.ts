@@ -3,6 +3,7 @@ import { body, cookie, validationResult } from "express-validator";
 import { verifyJWT, verifyPasswordAndCreateJWT } from "../services/JWTService";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { MyError } from "../myerror";
+import { handleMiddlewareErrors, MiddlewareError } from "./utils";
 
 export const loginRouter = express.Router();
 
@@ -10,9 +11,8 @@ loginRouter.post("",
 body("name").isLength({min:1, max:100}),
 body("password").isStrongPassword(),
 async (req, res) =>{
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
     try {
+        handleMiddlewareErrors(req, res);
         const token = await verifyPasswordAndCreateJWT(req.body.name, req.body.password);
         const loginResource = verifyJWT(token);
         res.status(201).cookie("access_token", token, {
@@ -23,6 +23,7 @@ async (req, res) =>{
         }).send(loginResource);
     } catch (error) {
         if (error instanceof Error && error.message === "Internal Error") return res.sendStatus(500);
+        else if (error instanceof MiddlewareError) return error.sendErrors(res);
         res.status(401).send(false);
     }
 })
@@ -30,9 +31,8 @@ async (req, res) =>{
 loginRouter.get("",
 cookie("access_token").isJWT(),
 async (req, res) =>{
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
     try {
+        handleMiddlewareErrors(req, res);
         const loginResource = verifyJWT(req.cookies.access_token);
         res.status(201).cookie("access_token", req.cookies.access_token, {
             httpOnly: true,
@@ -42,6 +42,7 @@ async (req, res) =>{
         }).send(loginResource);
     } catch (error) {
         if (error instanceof Error && error.message === "Internal Error") return res.sendStatus(500);
+        else if (error instanceof MiddlewareError) return error.sendErrors(res);
         res.status(401).send(false);
     }
 })
@@ -49,7 +50,5 @@ async (req, res) =>{
 loginRouter.delete("",
 cookie("access_token").isJWT(),
 async (req, res) =>{
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({errors: errors.array()})
     res.clearCookie("access_token").sendStatus(200);
 })

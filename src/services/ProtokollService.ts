@@ -44,7 +44,7 @@ export async function getProtokoll(id: string): Promise<ProtokollResource> {
  */
 export async function createProtokoll(protokollResource: ProtokollResource): Promise<ProtokollResource> {
     const pfleger = await Pfleger.findById(protokollResource.ersteller).exec();
-    if (!pfleger) throw new MyError("Invalid Value", 404, ["id"], [protokollResource.id!]);
+    if (!pfleger) throw new MyError("Pfleger existiert nicht", 404, ["ersteller"], [protokollResource.ersteller!]);
     await uniquenessCheck(protokollResource);
 
     const createdProtokoll: HydratedDocument<IProtokoll> = await Protokoll.create({
@@ -63,7 +63,7 @@ export async function createProtokoll(protokollResource: ProtokollResource): Pro
  */
 export async function updateProtokoll(protokollResource: ProtokollResource): Promise<ProtokollResource> {
     const protokollToUpdate = await Protokoll.findById(protokollResource.id).exec();
-    if (!protokollToUpdate) throw new MyError("Invalid Value", 404, ["id"], [protokollResource.id!]);
+    if (!protokollToUpdate) throw new MyError("Protokoll konnte nicht gefunden werden", 404, ["id"], [protokollResource.id!]);
 
     await uniquenessCheck(protokollResource, protokollToUpdate._id);
 
@@ -87,7 +87,7 @@ export async function updateProtokoll(protokollResource: ProtokollResource): Pro
  */
 export async function deleteProtokoll(id: string): Promise<void> {
     const deletedProtokoll = await Protokoll.findByIdAndDelete(id).exec();
-    if (!deletedProtokoll) throw new MyError("Invalid Value", 404, ["id"], [id], "params");
+    if (!deletedProtokoll) throw new MyError("Protokoll konnte nicht gefunden werden", 404, ["id"], [id], "params");
 
     const eintraegeToBeDeleted = await Eintrag.find({protokoll: deletedProtokoll._id}).exec();
     for (const eintrag of eintraegeToBeDeleted) {

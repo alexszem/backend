@@ -25,3 +25,4 @@ abgabe*.zip
 gradingIn
 gradingOut
 plag*.*
+.env
