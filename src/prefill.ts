@@ -20,6 +20,7 @@ export async function prefillDB(): Promise<{ behrens: PflegerResource; protokoll
     await Eintrag.syncIndexes();
     
     const behrens = await createPfleger({ name: "Behrens", password: "123_abc_ABC", admin: true });
+    const paul = await createPfleger({ name: "Paul", password: "123_abc_ABC", admin: false });
     logger.info(`Prefill DB with test data, pfleger: ${behrens.name}, password 123_abc_ABC`);
     
     const protokolle: ProtokollResource[] = [];
@@ -45,5 +46,36 @@ export async function prefillDB(): Promise<{ behrens: PflegerResource; protokoll
             protokolle.push({ ...protokoll, gesamtMenge: gesamtMenge });
         }
     }
+
+    const edith: ProtokollResource = {
+        patient: "Edith",
+        datum: "31.12.1999",
+        ersteller: behrens.id!,
+        public: true,
+        closed: false
+    }
+    await createProtokoll(edith)  
+    
+    const edithEisern: ProtokollResource = {
+        patient: "Edith Eisern",
+        datum: "31.12.1999",
+        ersteller: behrens.id!,
+        public: true,
+        closed: false
+    }
+    await createProtokoll(edithEisern)  
+    
+
+    for (let index = 10; index < 31; index++) {
+        await createProtokoll({
+            patient: "Walter Lösch",
+            datum: `${index}.12.2005`,
+            ersteller: behrens.id!,
+            public: false,
+            closed: true
+        })  
+    }
+
+
     return { behrens, protokolle };
 }

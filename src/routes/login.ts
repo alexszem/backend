@@ -48,7 +48,10 @@ async (req, res) =>{
             res.sendStatus(500);
             return
         } 
-        else if (error instanceof MiddlewareError) return error.sendErrors(res);
+        else if (error instanceof MiddlewareError) {
+            res.sendStatus(400)
+            return
+        }
         res.status(401).send(false);
     }
 })
